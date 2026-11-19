@@ -1,0 +1,175 @@
+{
+  "info": {
+    "_postman_id": "1e72e2dc-b97c-4d07-afae-3777096b3fd0",
+    "name": "Blockchain Lab3",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "60305296",
+    "_collection_link": "https://go.postman.co/collection/60305296-1e72e2dc-b97c-4d07-afae-3777096b3fd0?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Post data",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status odpowiedzi to 200 OK\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Hash bloku zaczyna się od 0000 i zapisano dane bloku\", function () {\n    const jsonData = pm.response.json();\n    pm.expect(jsonData).to.have.property(\"hash\");\n    pm.expect(jsonData.hash.startsWith(\"0000\")).to.be.true;\n    \n    // Zapisujemy poprzedni hash jako prevHash, a bieżący jako lastHash\n    pm.environment.set(\"prevHash\", pm.environment.get(\"lastHash\") || \"\");\n    pm.environment.set(\"lastHash\", jsonData.hash);\n    pm.environment.set(\"minerId\", jsonData.block.transactions[0].recipient);\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\t\"name\": \"Add your name in the body\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mine",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mine"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status odpowiedzi to 201 Created\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Poprawna struktura JSON z komunikatem\", function () {\r\n    const jsonData = pm.response.json();\r\n    pm.expect(jsonData).to.have.property(\"message\");\r\n    pm.expect(jsonData.message).to.include(\"Transakcja zostanie dodana do bloku\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sender\": \"{{minerId}}\",\r\n  \"recipient\": \"Bob\",\r\n  \"amount\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/new",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "new"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get data",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status odpowiedzi to 200 OK\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Struktura JSON i zgodność previous_hash z poprzednim blokiem\", function () {\n    const jsonData = pm.response.json();\n    pm.expect(jsonData).to.have.property(\"chain\");\n    pm.expect(jsonData).to.have.property(\"length\");\n    \n    const lastBlock = jsonData.chain[jsonData.chain.length - 1];\n    const prevHash = pm.environment.get(\"prevHash\");\n    \n    if (prevHash) {\n        pm.expect(lastBlock.previous_hash).to.eql(prevHash);\n    }\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/chain",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chain"
+          ]
+        },
+        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+      },
+      "response": []
+    },
+    {
+      "name": "{{baseUrl}}/transactions/pending",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status odpowiedzi to 200 OK\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Zwraca listę oczekujących transakcji i licznik\", function () {\r\n    const jsonData = pm.response.json();\r\n    pm.expect(jsonData).to.have.property(\"pending_transactions\");\r\n    pm.expect(jsonData).to.have.property(\"count\");\r\n    pm.expect(jsonData.pending_transactions).to.be.an(\"array\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/transactions/pending",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "pending"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "{{baseUrl}}/block/6969696",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status odpowiedzi to 200 OK\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Zwraca poprawny blok o indeksie 1\", function () {\r\n    const jsonData = pm.response.json();\r\n    pm.expect(jsonData).to.have.property(\"block\");\r\n    pm.expect(jsonData.block.index).to.eql(1);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/block/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "block",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
